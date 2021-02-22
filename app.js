@@ -2,18 +2,24 @@
 const fs = require("fs");
 
 const isSolved = currentLayoutArr => currentLayoutArr.every(flask => {
-	const reference = flask.value[0];
+	const reference = flask.sips[0];
 	const solveFlask = color => color === reference;
-	return flask.every(solveFlask);
+	return flask.sips.every(solveFlask);
 });
 
 //<editor-fold desc="isSolved test">
 const testSolvedArr = [
-	[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]
+	{ flaskIndex: 0, sips: [0, 0, 0, 0] },
+	{ flaskIndex: 1, sips: [1, 1, 1, 1] },
+	{ flaskIndex: 2, sips: [2, 2, 2, 2] },
+	{ flaskIndex: 3, sips: [3, 3, 3, 3] }
 ];
 
 const testUnSolvedArr = [
-	[1, 1, 1, 1], [1, 2, 3, 4], [1, 2, 3, 4], [1, 2, 1, 1]
+	{ flaskIndex: 0, sips: [1, 1, 1, 1] },
+	{ flaskIndex: 0, sips: [1, 2, 3, 4] },
+	{ flaskIndex: 0, sips: [1, 2, 3, 4] },
+	{ flaskIndex: 0, sips: [1, 2, 1, 1] }
 ];
 
 console.log("solved arr test is", isSolved(testSolvedArr) ? "passed" : "failed");
@@ -138,10 +144,10 @@ const solution = [];
 const rawInputData = fs.readFileSync("./test/samples/sample1.json");
 const initialPuzzle = JSON.parse(rawInputData);
 
-while (!isSolved(initialPuzzle)) {
-	const availableMoves = () => {
-	};
-	const currentPuzzleLayout = () => {
-	};
-	const nextPuzzleLayout = makeAMove(currentPuzzleLayout());
-}
+// while (!isSolved(initialPuzzle)) {
+// 	const availableMoves = () => {
+// 	};
+// 	const currentPuzzleLayout = () => {
+// 	};
+// 	const nextPuzzleLayout = makeAMove(currentPuzzleLayout());
+// }
