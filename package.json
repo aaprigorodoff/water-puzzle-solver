@@ -1,0 +1,27 @@
+{
+  "name": "water-puzzle-solver",
+  "version": "1.0.0",
+  "description": "This package had written to solve 107 lvl on the Mobile game \"Water Puzzle\"",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaprigorodoff/water-puzzle-solver.git"
+  },
+  "author": "aaprigorodoff",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aaprigorodoff/water-puzzle-solver/issues"
+  },
+  "homepage": "https://github.com/aaprigorodoff/water-puzzle-solver#readme",
+  "dependencies": {
+    "fs": "^0.0.1-security"
+  },
+  "devDependencies": {
+    "eslint": "^7.2.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1"
+  }
+}
