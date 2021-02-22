@@ -33,6 +33,12 @@
             "as-needed"
         ],
         "spaced-comment": "off",
-        "comma-dangle": "off"
+        "comma-dangle": "off",
+        "no-console": "off",
+        "max-len": [
+            "error",
+            {"ignoreComments": true},
+            {"code": 140}
+        ]
     }
 }
