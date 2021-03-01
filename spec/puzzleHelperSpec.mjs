@@ -6,7 +6,10 @@ import {
 	getFlaskSameColorSipsCount,
 	getLayoutAvailableMoves,
 	isFlasksSameColor,
-	isPuzzleSolved
+	isPuzzleSolved,
+	moveSingleSip,
+	getFirstAvailableColorIndexForSourceFlask,
+	makeAMove
 } from "../puzzleHelper.js";
 
 const generateFlask = (flaskIndex, sips) => ({ flaskIndex, sips });
@@ -178,6 +181,135 @@ describe("Helper Flask function", () => {
 				generateFlask(7, [0, 0, 0, 0]),
 			];
 			expect(isPuzzleSolved(simpleLayout)).toBeFalse();
+		});
+	});
+	describe("getFirstAvailableColorIndexForSourceFlask returns", () => {
+		it("-1 for empty flask", () => {
+			expect(getFirstAvailableColorIndexForSourceFlask(generateFlask(1, [0, 0, 0, 0])))
+				.toBe(-1);
+		});
+		it("right value for full flask", () => {
+			expect(getFirstAvailableColorIndexForSourceFlask(generateFlask(1, [4, 4, 4, 4])))
+				.toBe(3);
+		});
+		it("right value for non-full flask", () => {
+			expect(getFirstAvailableColorIndexForSourceFlask(generateFlask(1, [4, 4, 0, 0])))
+				.toBe(1);
+		});
+	});
+	describe("moveSingleSip moves single sip", () => {
+		it("from full flask to empty flask", () => {
+			const flaskSource = generateFlask(0, [1, 2, 3, 4]);
+			const flaskTarget = generateFlask(1, [0, 0, 0, 0]);
+			expect(moveSingleSip(flaskSource, flaskTarget))
+				.toEqual(jasmine.objectContaining({
+					newFlaskSource: { flaskIndex: 0, sips: [1, 2, 3, 0] },
+					newFlaskTarget: { flaskIndex: 1, sips: [4, 0, 0, 0] }
+				}));
+		});
+		it("from full flask to non-empty flask", () => {
+			const flaskSource = generateFlask(0, [1, 2, 3, 4]);
+			const flaskTarget = generateFlask(1, [2, 0, 0, 0]);
+			expect(moveSingleSip(flaskSource, flaskTarget))
+				.toEqual(jasmine.objectContaining({
+					newFlaskSource: { flaskIndex: 0, sips: [1, 2, 3, 0] },
+					newFlaskTarget: { flaskIndex: 1, sips: [2, 4, 0, 0] }
+				}));
+		});
+		it("from non-empty flask to non-empty flask", () => {
+			const flaskSource = generateFlask(0, [1, 2, 3, 0]);
+			const flaskTarget = generateFlask(1, [2, 0, 0, 0]);
+			expect(moveSingleSip(flaskSource, flaskTarget))
+				.toEqual(jasmine.objectContaining({
+					newFlaskSource: { flaskIndex: 0, sips: [1, 2, 0, 0] },
+					newFlaskTarget: { flaskIndex: 1, sips: [2, 3, 0, 0] }
+				}));
+		});
+	});
+	describe("makeAMove makes right move", () => {
+		it("from single element flask to empty flask", () => {
+			const flaskSource = generateFlask(0, [1, 0, 0, 0]);
+			const flaskTarget = generateFlask(1, [0, 0, 0, 0]);
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 0, sips: [0, 0, 0, 0] }
+				]));
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 1, sips: [1, 0, 0, 0] }
+				]));
+		});
+		it("from two non-same color element flask to empty flask", () => {
+			const flaskSource = generateFlask(0, [1, 2, 0, 0]);
+			const flaskTarget = generateFlask(1, [0, 0, 0, 0]);
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 0, sips: [1, 0, 0, 0] }
+				]));
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 1, sips: [2, 0, 0, 0] }
+				]));
+		});
+		it("from two non-same color element flask to non-empty flask", () => {
+			const flaskSource = generateFlask(0, [1, 2, 0, 0]);
+			const flaskTarget = generateFlask(1, [3, 2, 0, 0]);
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 0, sips: [1, 0, 0, 0] }
+				]));
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 1, sips: [3, 2, 2, 0] }
+				]));
+		});
+		it("from full non-same element flask to non-empty flask", () => {
+			const flaskSource = generateFlask(0, [1, 2, 3, 4]);
+			const flaskTarget = generateFlask(1, [3, 4, 0, 0]);
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 0, sips: [1, 2, 3, 0] }
+				]));
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 1, sips: [3, 4, 4, 0] }
+				]));
+		});
+		it("from full same element flask to non-empty flask", () => {
+			const flaskSource = generateFlask(0, [3, 3, 3, 3]);
+			const flaskTarget = generateFlask(1, [3, 0, 0, 0]);
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 0, sips: [3, 0, 0, 0] }
+				]));
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 1, sips: [3, 3, 3, 3] }
+				]));
+		});
+		it("from full same element flask to full same element flask", () => {
+			const flaskSource = generateFlask(0, [3, 3, 3, 3]);
+			const flaskTarget = generateFlask(1, [3, 3, 3, 3]);
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 0, sips: [3, 3, 3, 3] }
+				]));
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 1, sips: [3, 3, 3, 3] }
+				]));
+		});
+		it("and moves two same-color sips to other flask", () => {
+			const flaskSource = generateFlask(0, [3, 2, 2, 0]);
+			const flaskTarget = generateFlask(1, [2, 0, 0, 0]);
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 0, sips: [3, 0, 0, 0] }
+				]));
+			expect(makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 }))
+				.toEqual(jasmine.arrayContaining([
+					{ flaskIndex: 1, sips: [2, 2, 2, 0] }
+				]));
 		});
 	});
 });

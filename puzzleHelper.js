@@ -1,3 +1,5 @@
+// TODO: think about claases and stacks structure
+
 const isPuzzleSolved = currentLayoutArr => currentLayoutArr.every(flask => {
 	const reference = flask.sips[0];
 	const solveFlask = color => color === reference;
@@ -10,21 +12,21 @@ const isFlaskFull = flask => flask.sips.every(sip => sip !== 0);
 
 const isFlasksSameColor = (flask1, flask2) => flask1.sips.filter(sip => sip !== 0).pop() === flask2.sips.filter(sip => sip !== 0).pop();
 
-const isFlasksSameIndex = (flask1, flask2) => flask1.flaskIndex === flask2.flaskIndex;
+const isFlasksHaveSameIndex = (flask1, flask2) => flask1.flaskIndex === flask2.flaskIndex;
 
-const isMovePossible = (flaskFrom, flaskTo) => !isFlasksSameIndex(flaskFrom, flaskTo)
-	&& !isFlaskFull(flaskTo)
-	&& !isFlaskEmpty(flaskFrom)
-	&& (isFlasksSameColor(flaskFrom, flaskTo)) || isFlaskEmpty(flaskTo);
+const isMovePossible = (flaskSource, flaskTarget) => !isFlasksHaveSameIndex(flaskSource, flaskTarget)
+	&& !isFlaskFull(flaskTarget)
+	&& !isFlaskEmpty(flaskSource)
+	&& (isFlasksSameColor(flaskSource, flaskTarget) || isFlaskEmpty(flaskTarget));
 
 const getLayoutAvailableMoves = currentLayoutArr => {
 	const availableMoves = [];
 	currentLayoutArr
-		.forEach(flaskFrom => {
+		.forEach(flaskSource => {
 			currentLayoutArr
-				.filter(flaskTo => isMovePossible(flaskFrom, flaskTo))
-				.forEach(flaskTo => {
-					availableMoves.push({ from: flaskFrom.flaskIndex, to: flaskTo.flaskIndex });
+				.filter(flaskTarget => isMovePossible(flaskSource, flaskTarget))
+				.forEach(flaskTarget => {
+					availableMoves.push({ from: flaskSource.flaskIndex, to: flaskTarget.flaskIndex });
 				});
 		});
 	return availableMoves;
@@ -53,26 +55,71 @@ const getFlaskSameColorSipsCount = flask => {
 	return counter;
 };
 
-const getFirstAvailableColorIndex = flask => 0;
+const getFirstAvailableColorIndexForSourceFlask = flask => {
+	if (isFlaskEmpty(flask)) {
+		return -1;
+	} if (isFlaskFull(flask)) {
+		return flask.sips.length - 1;
+	}
+	// it searching for first null sip and returns index of previous sip
+	return flask.sips.findIndex(sip => sip === 0) - 1;
+};
+
+const moveSingleSip = (flaskSource, flaskTarget) => {
+	const sourceSipIndex = getFirstAvailableColorIndexForSourceFlask(flaskSource);
+	const targetSipIndex = flaskTarget.sips.findIndex(sip => sip === 0);
+	const sipTemp = flaskSource.sips[sourceSipIndex];
+	const resultSipsSource = flaskSource.sips.map((sip, index) => {
+		if (index === sourceSipIndex) {
+			return 0;
+		}
+		return sip;
+	});
+	const resultSipsTarget = flaskTarget.sips.map((sip, index) => {
+		if (index === targetSipIndex) {
+			return sipTemp;
+		}
+		return sip;
+	});
+
+	const resultFlaskSource = { flaskIndex: flaskSource.flaskIndex, sips: resultSipsSource };
+	const resultFlaskTarget = { flaskIndex: flaskTarget.flaskIndex, sips: resultSipsTarget };
+	return {
+		newFlaskSource: resultFlaskSource,
+		newFlaskTarget: resultFlaskTarget
+	};
+};
 
 const makeAMove = (currentPuzzleLayout, move) => {
-	const flaskFrom = currentPuzzleLayout.find(flask => flask.flaskIndex === move.from);
-	const flaskTo = currentPuzzleLayout.find(flask => flask.flaskIndex === move.to);
-	if (!isMovePossible(flaskFrom, flaskTo)) {
+	const flaskSource = currentPuzzleLayout.find(flask => flask.flaskIndex === move.from);
+	const flaskTarget = currentPuzzleLayout.find(flask => flask.flaskIndex === move.to);
+	if (!isMovePossible(flaskSource, flaskTarget)) {
 		return currentPuzzleLayout;
 	}
 
-	const flaskToFreeSpace = getFlaskFreeSpace(flaskTo);
-	const flaskFromSameColorCount = getFlaskSameColorSipsCount(flaskFrom);
-	const sipsToMoveCount = Math.min(flaskToFreeSpace, flaskFromSameColorCount);
+	const flaskTargetFreeSpace = getFlaskFreeSpace(flaskTarget);
+	const flaskSourceSameColorCount = getFlaskSameColorSipsCount(flaskSource);
+	let sipsToMoveCount = Math.min(flaskTargetFreeSpace, flaskSourceSameColorCount);
 
-	const resultSipsFrom = [];
-	const resultSipsTo = [];
-	// const is
-	return (
-		resultFlaskFrom,
-		resultFlaskTo
-	);
+	let resultFlaskSource = flaskSource;
+	let resultFlaskTarget = flaskTarget;
+
+	while (sipsToMoveCount > 0) {
+		const result = moveSingleSip(resultFlaskSource, resultFlaskTarget);
+		resultFlaskSource = result.newFlaskSource;
+		resultFlaskTarget = result.newFlaskTarget;
+		sipsToMoveCount -= 1;
+	}
+
+	return currentPuzzleLayout.map(flask => {
+		if (flask.flaskIndex === flaskSource.flaskIndex) {
+			return resultFlaskSource;
+		}
+		if (flask.flaskIndex === flaskTarget.flaskIndex) {
+			return resultFlaskTarget;
+		}
+		return flask;
+	});
 };
 
 export {
@@ -84,5 +131,7 @@ export {
 	getLayoutAvailableMoves,
 	getFlaskSameColorSipsCount,
 	isFlaskFull,
-	makeAMove
+	makeAMove,
+	moveSingleSip,
+	getFirstAvailableColorIndexForSourceFlask
 };
