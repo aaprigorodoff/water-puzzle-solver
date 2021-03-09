@@ -1,5 +1,7 @@
 // TODO: think about claases and stacks structure
 
+import MD5 from "crypto-js/md5.js";
+
 const isPuzzleSolved = currentLayoutArr => currentLayoutArr.every(flask => {
 	const reference = flask.sips[0];
 	const solveFlask = color => color === reference;
@@ -19,7 +21,7 @@ const isMovePossible = (flaskSource, flaskTarget) => !isFlasksHaveSameIndex(flas
 	&& !isFlaskEmpty(flaskSource)
 	&& (isFlasksSameColor(flaskSource, flaskTarget) || isFlaskEmpty(flaskTarget));
 
-const getLayoutAvailableMoves = currentLayoutArr => {
+const getAvailableMoves = currentLayoutArr => {
 	const availableMoves = [];
 	currentLayoutArr
 		.forEach(flaskSource => {
@@ -50,6 +52,8 @@ const getFlaskSameColorSipsCount = flask => {
 	for (let i = flask.sips.length - 1; i >= 0; i--) {
 		if (flask.sips[i] === color) {
 			counter += 1;
+		} else if (flask.sips[i] !== 0) {
+			break;
 		}
 	}
 	return counter;
@@ -121,6 +125,87 @@ const makeAMove = (currentPuzzleLayout, move) => {
 		return flask;
 	});
 };
+const convertMovesToString = moves => {
+	let result = "";
+	moves.forEach((move, index) => {
+		if (move) {
+			result += `${index}) `;
+			result += move.from;
+			result += "->";
+			result += move.to;
+			result += ";\r\n";
+		}
+	});
+	return result;
+};
+
+const generateFlask = (flaskIndex, sips) => ({ flaskIndex, sips });
+
+const solvePuzzle = async (initialPuzzleLayout, initialMove = null, result = [], statesMd5 = []) => {
+	result.push(initialMove);
+	const newPuzzleLayout = initialMove != null
+		? makeAMove(initialPuzzleLayout, initialMove)
+		: initialPuzzleLayout;
+	const newPuzzleLayoutString = JSON.stringify(newPuzzleLayout);
+	const currentMd5 = MD5(newPuzzleLayoutString).toString();
+	if (statesMd5.some(m => m === currentMd5)) {
+		return;
+	}
+	statesMd5.push(currentMd5);
+	if (!isPuzzleSolved(newPuzzleLayout)) {
+		const availableMovesForNewLayout = getAvailableMoves(newPuzzleLayout);
+		if (availableMovesForNewLayout.length > 0) {
+			availableMovesForNewLayout.forEach(move => {
+				if (initialMove && move.from === initialMove.to && move.to === initialMove.from) {
+					return;
+				}
+				// if (result.length % 500 === 0) {
+				setTimeout(solvePuzzle, 1, newPuzzleLayout, move, result, statesMd5);
+				// } else {
+				// solvePuzzleForkMd5States(newPuzzleLayout, move, result, statesMd5);
+				// }
+			});
+		} else {
+			// result = [];
+			console.log("no available moves");
+		}
+	} else {
+		console.log("success");
+		console.log(convertMovesToString(result));
+		// throw { asds: "asd" };
+	}
+};
+
+const solvePuzzleForkAvailableMoves = (initialPuzzleLayout, initialAvailableMoves, result = [], statesMd5 = []) => {
+	initialAvailableMoves.some(move => {
+		const newPuzzleLayout = makeAMove(initialPuzzleLayout, move);
+		if (isPuzzleSolved(newPuzzleLayout)) {
+			console.log("Success, result.length=", result.length, "statesMd5 length=", statesMd5.length);
+			// console.log(convertMovesToString(result));
+			return true;
+		}
+
+		const md5 = MD5(JSON.stringify(newPuzzleLayout)).toString();
+		if (statesMd5.some(m => m === md5)) {
+			return false;
+		}
+
+		statesMd5.push(md5);
+		result.push(move);
+
+		const newAvailableMoves = getAvailableMoves(newPuzzleLayout)
+			.filter(newMove => newMove.from !== move.to && newMove.to !== move.from);
+		if (newAvailableMoves.length > 0) {
+			setTimeout(solvePuzzleForkAvailableMoves, 0, newPuzzleLayout, newAvailableMoves, result, statesMd5);
+			// solvePuzzleForkAvailableMoves(newPuzzleLayout, newAvailableMoves, result, statesMd5);
+		}
+		console.log("no available moves, result.length=", result.length, "statesMd5 length=", statesMd5.length);
+		// statesMd5.pop();
+		// result.pop();
+		return false;
+
+	});
+};
 
 export {
 	isPuzzleSolved,
@@ -128,10 +213,13 @@ export {
 	isFlaskEmpty,
 	getFlaskColor,
 	isFlasksSameColor,
-	getLayoutAvailableMoves,
+	getAvailableMoves,
 	getFlaskSameColorSipsCount,
 	isFlaskFull,
 	makeAMove,
 	moveSingleSip,
-	getFirstAvailableColorIndexForSourceFlask
+	getFirstAvailableColorIndexForSourceFlask,
+	solvePuzzleForkAvailableMoves,
+	generateFlask,
+	solvePuzzle
 };

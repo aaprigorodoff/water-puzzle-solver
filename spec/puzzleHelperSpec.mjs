@@ -4,15 +4,14 @@ import {
 	getFlaskColor,
 	getFlaskFreeSpace,
 	getFlaskSameColorSipsCount,
-	getLayoutAvailableMoves,
+	getAvailableMoves,
 	isFlasksSameColor,
 	isPuzzleSolved,
 	moveSingleSip,
 	getFirstAvailableColorIndexForSourceFlask,
-	makeAMove
+	makeAMove,
+	generateFlask
 } from "../puzzleHelper.js";
-
-const generateFlask = (flaskIndex, sips) => ({ flaskIndex, sips });
 
 describe("Helper Flask function", () => {
 	describe("isFlaskFull returns", () => {
@@ -102,6 +101,9 @@ describe("Helper Flask function", () => {
 		it("right value for non-empty flask with no same sips at the end", () => {
 			expect(getFlaskSameColorSipsCount(generateFlask(0, [1, 2, 3, 0]))).toBe(1);
 		});
+		it("right value for full flask with no same sips at the end", () => {
+			expect(getFlaskSameColorSipsCount(generateFlask(0, [1, 2, 1, 2]))).toBe(1);
+		});
 	});
 	describe("getLayoutAvailableMoves returns", () => {
 		it("right value for simple level", () => {
@@ -109,9 +111,9 @@ describe("Helper Flask function", () => {
 				generateFlask(0, [1, 1, 1, 1]),
 				generateFlask(1, [1, 1, 1, 0])
 			];
-			expect(getLayoutAvailableMoves(simpleLayout))
+			expect(getAvailableMoves(simpleLayout))
 				.toEqual(jasmine.arrayContaining([{ from: 0, to: 1 }]));
-			expect(getLayoutAvailableMoves(simpleLayout))
+			expect(getAvailableMoves(simpleLayout))
 				.not.toEqual(jasmine.arrayContaining([{ from: 1, to: 0 }]));
 		});
 		it("right value for medium level", () => {
@@ -119,9 +121,9 @@ describe("Helper Flask function", () => {
 				generateFlask(0, [1, 1, 1, 0]),
 				generateFlask(1, [1, 1, 1, 0])
 			];
-			expect(getLayoutAvailableMoves(simpleLayout))
+			expect(getAvailableMoves(simpleLayout))
 				.toEqual(jasmine.arrayContaining([{ from: 0, to: 1 }]));
-			expect(getLayoutAvailableMoves(simpleLayout))
+			expect(getAvailableMoves(simpleLayout))
 				.toEqual(jasmine.arrayContaining([{ from: 1, to: 0 }]));
 		});
 		it("right value for complex level", () => {
@@ -131,13 +133,13 @@ describe("Helper Flask function", () => {
 				generateFlask(2, [1, 1, 1, 2]),
 				generateFlask(3, [0, 0, 0, 0])
 			];
-			expect(getLayoutAvailableMoves(simpleLayout))
+			expect(getAvailableMoves(simpleLayout))
 				.toEqual(jasmine.arrayContaining([{ from: 0, to: 3 }]));
-			expect(getLayoutAvailableMoves(simpleLayout))
+			expect(getAvailableMoves(simpleLayout))
 				.toEqual(jasmine.arrayContaining([{ from: 1, to: 3 }]));
-			expect(getLayoutAvailableMoves(simpleLayout))
+			expect(getAvailableMoves(simpleLayout))
 				.toEqual(jasmine.arrayContaining([{ from: 2, to: 0 }]));
-			expect(getLayoutAvailableMoves(simpleLayout))
+			expect(getAvailableMoves(simpleLayout))
 				.toEqual(jasmine.arrayContaining([{ from: 2, to: 3 }]));
 		});
 	});
@@ -310,6 +312,17 @@ describe("Helper Flask function", () => {
 				.toEqual(jasmine.arrayContaining([
 					{ flaskIndex: 1, sips: [2, 2, 2, 0] }
 				]));
+		});
+		it("and moves only one sip to empty flask", () => {
+			const flaskSource = generateFlask(0, [1, 2, 1, 2]);
+			const flaskTarget = generateFlask(1, [0, 0, 0, 0]);
+			const newLayout = makeAMove([flaskSource, flaskTarget], { from: 0, to: 1 });
+			expect(newLayout).toEqual(jasmine.arrayContaining([
+				{ flaskIndex: 0, sips: [1, 2, 1, 0] }
+			]));
+			expect(newLayout).toEqual(jasmine.arrayContaining([
+				{ flaskIndex: 1, sips: [2, 0, 0, 0] }
+			]));
 		});
 	});
 });
